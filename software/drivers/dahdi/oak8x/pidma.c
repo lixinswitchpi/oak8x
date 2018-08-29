@@ -1,3 +1,15 @@
+/*
+ * SwitchPi OAK module Driver for DAHDI Telephony interface.
+ * This driver is based on Digium WCTDM driver and developed to support SwitchPi OAK8X 4FXO+X board only,
+ * you can use it by freely, but there is no warranty as it is.
+ * Written by Xin Li <xin.li@switchpi.com>
+ *
+ * Copyright (C) 2017-2018, SwitchPi, Inc.
+ *
+ * All rights reserved.
+ *
+ */
+
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>
