@@ -1,15 +1,3 @@
-/*
- * SwitchPi OAK module Driver for DAHDI Telephony interface.
- * This driver is based on Digium WCTDM driver and developed to support SwitchPi OAK8X 4FXO+X board only,
- * you can use it by freely, but there is no warranty as it is.
- * Written by Xin Li <xin.li@switchpi.com>
- *
- * Copyright (C) 2017-2018, SwitchPi, Inc.
- *
- * All rights reserved.
- *
- */
-
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>
@@ -128,6 +116,7 @@
 #define CODEC_RESET 17
 #define CODEC_CS0 16//cs0
 #define CODEC_CS1 27 //cs1
+#define CODEC_CS2 23//cs2 this GPIO got issue, pay attentions on this
 #define CPLD_CS0 12//CPLD
 #define MODULE_LED0 24
 #define MODULE_LED1 3
@@ -217,12 +206,15 @@ void init_gpio_cs(void)
     OUT_GPIO(CODEC_CS0);
     INP_GPIO(CODEC_CS1);
     OUT_GPIO(CODEC_CS1);
+    INP_GPIO(CODEC_CS2);
+    OUT_GPIO(CODEC_CS2);
     INP_GPIO(CPLD_CS0);
     OUT_GPIO(CPLD_CS0);
     //initial H
 	GPIO_SETB(CODEC_RESET);
 	GPIO_SETB(CODEC_CS0);
 	GPIO_SETB(CODEC_CS1);
+	GPIO_SETB(CODEC_CS2);
 	GPIO_SETB(CPLD_CS0);
 
 
@@ -328,7 +320,7 @@ static int __init_spi_bus(void){
 		printk("could not remap memory\n");
 		return 1;
 	}
-	div = CORE_CLOCK / 10000000;//10M
+	div = CORE_CLOCK / 7000000;//10M
 
 	*spi_base             = 0x00;
 	*spi_base            |= ((1<<4) | (1<<5)); // clear tx,rx fifo
@@ -882,5 +874,4 @@ EXPORT_SYMBOL(led_off);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Xin Li <xin.li@switchpi.com>");
 MODULE_DESCRIPTION("WC card driver");
-
 

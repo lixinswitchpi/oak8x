@@ -1,27 +1,3 @@
-/*
- * SwitchPi OAK module Driver for DAHDI Telephony interface.
- * This driver is based on Digium WCTDM driver and developed to support SwitchPi OAK8X 4FXO+X board only,
- * you can use it by freely, but there is no warranty as it is.
- * Written by Xin Li <xin.li@switchpi.com>
- *
- * Copyright (C) 2017-2018, SwitchPi, Inc.
- *
- * All rights reserved.
- *
- */
-
-/*
- * See http://www.asterisk.org for more information about
- * the Asterisk project. Please do not directly contact
- * any of the maintainers of this project for assistance;
- * the project provides a web site, mailing lists and IRC
- * channels for your use.
- *
- * This program is free software, distributed under the terms of
- * the GNU General Public License Version 2 as published by the
- * Free Software Foundation. See the LICENSE file included with
- * this program for more details.
- */
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/spi/spi.h>
@@ -453,7 +429,10 @@ static void set_daisychain(struct wctdm *wc, int cs) {
 }
 
 static void cpld_write(unsigned char reg, struct wctdm *wc) {
+	unsigned long flags;
+	spin_lock_irqsave(&wc->lock, flags);
 	__spi_write(reg, 88);
+	spin_unlock_irqrestore(&wc->lock, flags);
 }
 
 static void __wctdm_setreg(struct wctdm *wc, int card, unsigned char reg, unsigned char value)
@@ -1113,26 +1092,25 @@ static void work_set_hook_status_handler(void)
 		//x = wc->intcount % NUM_CARDS;
 		x = wc->intcount & 0x7;
 		mode = wc->intcount & 0x38;
-				/* Read first shadow reg */
-				if (wc->modtype[x] == MOD_TYPE_FXS)
-					wc->reg0shadow[x] = wctdm_getreg(wc, x, 68);
-				else if (wc->modtype[x] == MOD_TYPE_FXO)
-					wc->reg0shadow[x] = wctdm_getreg(wc, x, 5);
-				/* Read second shadow reg */
-				if (wc->modtype[x] == MOD_TYPE_FXS)
-					wc->reg1shadow[x] = wctdm_getreg(wc, x, LINE_STATE);
-				else if (wc->modtype[x] == MOD_TYPE_FXO)
-					wc->reg1shadow[x] = wctdm_getreg(wc, x, 29);
-				/* Perform processing */
-				if (wc->modtype[x] == MOD_TYPE_FXS) {
-					wctdm_proslic_check_hook(wc, x);
-					if (!(wc->intcount & 0xf0)) {
-						wctdm_proslic_recheck_sanity(wc, x);
-					}
-				} else if (wc->modtype[x] == MOD_TYPE_FXO) {
-					wctdm_voicedaa_check_hook(wc, x);
-				}
-
+		/* Read first shadow reg */
+		if (wc->modtype[x] == MOD_TYPE_FXS)
+			wc->reg0shadow[x] = wctdm_getreg(wc, x, 68);
+		else if (wc->modtype[x] == MOD_TYPE_FXO)
+			wc->reg0shadow[x] = wctdm_getreg(wc, x, 5);
+		/* Read second shadow reg */
+		if (wc->modtype[x] == MOD_TYPE_FXS)
+			wc->reg1shadow[x] = wctdm_getreg(wc, x, LINE_STATE);
+		else if (wc->modtype[x] == MOD_TYPE_FXO)
+			wc->reg1shadow[x] = wctdm_getreg(wc, x, 29);
+		/* Perform processing */
+		if (wc->modtype[x] == MOD_TYPE_FXS) {
+			wctdm_proslic_check_hook(wc, x);
+			if (!(wc->intcount & 0xf0)) {
+				wctdm_proslic_recheck_sanity(wc, x);
+			}
+		} else if (wc->modtype[x] == MOD_TYPE_FXO) {
+			wctdm_voicedaa_check_hook(wc, x);
+		}
 		if (!(wc->intcount % 10000)) {
 			/* Accept an alarm once per 10 seconds */
 			for (x=0;x<4;x++)
@@ -2681,5 +2659,4 @@ module_param(fxotxgain, int, 0600);
 module_param(fxorxgain, int, 0600);
 module_param(fxstxgain, int, 0600);
 module_param(fxsrxgain, int, 0600);
-
 
