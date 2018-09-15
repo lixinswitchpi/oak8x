@@ -2556,11 +2556,14 @@ static int wctdm_init(void)
 static struct proc_dir_entry *proc_frame;
 static int frame_proc_show(struct seq_file *m, void *v)
 {
-	unsigned char sBuf[1024];
+	unsigned char *sBuf;
 	char str[10];
 	int i;
 
-	*sBuf = 0;
+	sBuf = kzalloc(1024, GFP_KERNEL);
+	if (sBuf == NULL)
+		return -ENOMEM;
+
 	strcat(sBuf, "Rxbuffp0:");
 	for (i = 0; i < 8; i++) {
 		sprintf(str, "%x ", rt[i]);
@@ -2580,6 +2583,8 @@ static int frame_proc_show(struct seq_file *m, void *v)
 	seq_printf(m, "-----Frame in buffer-----\n%s", sBuf);
 	seq_printf(m, "-----TDM INT CNT %d\n", wcnt);
 	seq_printf(m, "-----WC INT  CNT %d\n", gwc->intcount);
+
+	kfree(sBuf);
 	return 0;
 }
 
